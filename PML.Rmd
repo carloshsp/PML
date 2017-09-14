@@ -23,9 +23,9 @@ Every code step will be shown and commented. R version 3.4.1 on a macOS 10.12.16
 The strategy designed to cuild the machine learning algorithm above mentioned is the following:
 * Due to the nature of the data variability, most numeric and continuous, the model selected is the Random Forest.
 * First, features containing many NAs will be discarded
-* Also, due to the use of four different sensors, data acquired from those sensors will be separated and preprocessed individually
-* Principal Component Analysis is the method of choice for preprocessing, since it can select the components that contatin most of variance and reduce computing time.
-* Data preprocessed from all sensors is joined again for model fitting.
+* Training data will be sliced in two to allow model validation
+* A Random Forest model will be fit to training data
+* Model will be tested against tested data and accuracy obtained
 <br>
 <br>
 <br>
@@ -81,7 +81,7 @@ Knowing that 60 columns have no NAs and the remaining 100 variables have more th
 ```{r}
 na_count <-data.frame(na = sapply(training, function(y) 
                                   sum(length(which(is.na(y))))))
-trainx <- select(training, which(na_count$na < 1000), -c(1:7))
+training <- select(training, which(na_count$na < 1000), -c(1:7))
 ```
 <br>
 <br>
@@ -91,57 +91,27 @@ trainx <- select(training, which(na_count$na < 1000), -c(1:7))
 "Classe" is the outcome and should be factorized.
 
 ```{r}
-trainx$classe <- as.factor(trainx$classe)
+training$classe <- as.factor(training$classe)
 ```
 <br>
 <br>
 
-## Separating data by sensor
+# Data Slicing
 
-Since each sensor has many measured variables with its own bias it was decided to separate the data into four groups, each one using features collected by one of four sensors: belt, arm, dumbbell and forearm.
+Training data will be sliced in a train1 and test1 subgroups toi allow validation inside the trainign data obtained.
 
 ```{r}
-trainbelt <- select(trainx, contains("belt"))
-trainarm <- select(trainx, contains("arm"))
-traindumb <- select(trainx, contains("dumbbell"))
-trainfore <- select(trainx, contains("forearm"))
+partition <- createDataPartition(training$classe, p = 0.75, list=F)
+train1 <- training[partition,]
+test1 <- training[-partition,]         
 ```
-<br>
-<br>
-
-## Preprocessing
-
-Many features withing each group may be highly correlated, since they are collected by the same sensor. An example is the correlation plot of the belt sensor features, shown below.
-
-```{r}
-corrplot(cor(trainbelt))
-```
-<br>
-<br>
-
-Therefore, to avoid overfitting it was decided to preprocess each group individually using Principal Component Analysis and select components responsible for more than 90% of total variance. Each preprocessing model was then applied to the respective group.
-
-```{r}
-pcabelt <- preProcess(trainbelt, method = "pca", thresh = 0.9)
-beltpred <- predict(pcabelt, trainbelt)
-pcaarm <- preProcess(trainarm, method = "pca", thresh = 0.9)
-armpred <- predict(pcaarm, trainarm)
-pcadumb <- preProcess(traindumb, method = "pca", thresh = 0.9)
-dumbpred <- predict(pcadumb, traindumb)
-pcafore <- preProcess(trainfore, method = "pca", thresh = 0.9)
-forepred <- predict(pcafore, trainfore)
-```
-<br>
-<br>
 
 # Model Fitting - Random Forests
 
 Due to the numeric characteristic of the data and its variability the mode of choice was the Breinman's Random Forest. After joining all data together in a single data frame the randomForest command is appplied using its default parameters.
 <br>
 ```{r}
-genpred <- data.frame(beltpred, armpred, dumbpred, forepred, 
-                      classe = trainx$classe)
-fitgen <- randomForest(classe ~., data=genpred)
+fitall <- randomForest(classe ~., data=train1)
 ```
 <br>
 <br>
@@ -151,37 +121,29 @@ fitgen <- randomForest(classe ~., data=genpred)
 The Random Forest model do the cross validation inside the model. Each row is cross validated generating an out-of-bag (oob) error estimate.
 
 ```{r}
-print(fitgen)
+print(fitall)
 ```
 <br>
 <br>
 
+## Testing against sliced train1 subgroup
+
+```{r}
+predtest <- predict(fitall, test1)
+confusionMatrix(predtest, test1$classe)
+```
+
 # Prediction Algorithm
 
-The following prediction algorithm process data imputed the same way as the trained data, in order to get preprocessed PCAs at the same level and generate the same amount of features to allow proper prediction.
+The following prediction algorithm process data imputed the same way as the trained data, in order to get the same amount of features and allow proper prediction.
 
-Newdata in the following code is labelled **'testing'** and the result outcome data frame is called **'tpredall'**
+Newdata in the following code is labelled **'testing'** and the result outcome data frame is called **'predictionTable'**
 
 
 ```{r}
-testx <- select(testing, which(na_count$na == 0), -c(1:7))
-testx$classe <- as.factor(testx$classe)
-testbelt <- select(testx, contains("belt"))
-testarm <- select(testx, contains("arm"))
-testdumb <- select(testx, contains("dumbbell"))
-testfore <- select(testx, contains("forearm"))
-tpcabelt <- preProcess(testbelt, method = "pca", pcaComp = ncol(beltpred))
-tbeltpred <- predict(tpcabelt, testbelt)
-tpcaarm <- preProcess(testarm, method = "pca", pcaComp = ncol(armpred))
-tarmpred <- predict(tpcaarm, testarm)
-tpcadumb <- preProcess(testdumb, method = "pca", pcaComp = ncol(dumbpred))
-tdumbpred <- predict(tpcadumb, testdumb)
-tpcafore <- preProcess(testfore, method = "pca", pcaComp = ncol(forepred))
-tforepred <- predict(tpcafore, testfore)
-tgenpred <- data.frame(tbeltpred, tarmpred, tdumbpred, tforepred)
-
-
-tpredall <- data.frame(classe = predict(fitgen, tgenpred))
+testing <- select(testing, which(na_count$na == 0), -c(1:7))
+testing$classe <- as.factor(testing$classe)
+predictionTable <- data.frame(classe = predict(fitall, testing))
 ```
 <br>
 <br>
