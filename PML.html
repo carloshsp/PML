@@ -132,11 +132,19 @@ $(document).ready(function () {
 </div>
 <div id="strategy" class="section level1">
 <h1>Strategy</h1>
-<p>The strategy designed to cuild the machine learning algorithm above mentioned is the following: * Due to the nature of the data variability, most numeric and continuous, the model selected is the Random Forest. * First, features containing many NAs will be discarded * Training data will be sliced in two to allow model validation * A Random Forest model will be fit to training data * Model will be tested against tested data and accuracy obtained <br> <br> <br></p>
+<p>The strategy designed to cuild the machine learning algorithm above mentioned is the following:</p>
+<ul>
+<li>Due to the nature of the data variability, most numeric and continuous, the model selected is the Random Forest.</li>
+<li>First, features containing many NAs will be discarded</li>
+<li>Training data will be sliced in two to allow model validation</li>
+<li>A Random Forest model will be fit to training data</li>
+<li>Model will be tested against tested data and accuracy obtained</li>
+</ul>
+<p><br> <br> <br></p>
 </div>
 <div id="data-processing" class="section level1">
 <h1>Data Processing</h1>
-<p><br> <br></p>
+<p><br></p>
 <div id="load-required-packages" class="section level2">
 <h2>Load required packages</h2>
 <p>At first, the following packages are required to adequately process the data presented in this document:</p>
@@ -189,6 +197,7 @@ training &lt;- select(training, which(na_count$na &lt; 1000), -c(1:7))</code></p
 <pre class="r"><code>partition &lt;- createDataPartition(training$classe, p = 0.75, list=F)
 train1 &lt;- training[partition,]
 test1 &lt;- training[-partition,]         </code></pre>
+<p><br> <br></p>
 </div>
 <div id="model-fitting---random-forests" class="section level1">
 <h1>Model Fitting - Random Forests</h1>
@@ -206,14 +215,14 @@ test1 &lt;- training[-partition,]         </code></pre>
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 7
 ## 
-##         OOB estimate of  error rate: 0.48%
+##         OOB estimate of  error rate: 0.53%
 ## Confusion matrix:
-##      A    B    C    D    E  class.error
-## A 4183    1    0    0    1 0.0004778973
-## B   15 2827    6    0    0 0.0073735955
-## C    0   16 2547    4    0 0.0077911959
-## D    0    0   20 2390    2 0.0091210614
-## E    0    0    2    4 2700 0.0022172949</code></pre>
+##      A    B    C    D    E class.error
+## A 4180    3    1    0    1 0.001194743
+## B   12 2829    7    0    0 0.006671348
+## C    0   17 2548    2    0 0.007401636
+## D    0    0   28 2384    0 0.011608624
+## E    0    0    1    6 2699 0.002586844</code></pre>
 <p><br> <br></p>
 </div>
 <div id="testing-against-sliced-train1-subgroup" class="section level2">
@@ -224,11 +233,11 @@ confusionMatrix(predtest, test1$classe)</code></pre>
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1395    0    0    0    0
-##          B    0  946    2    0    0
-##          C    0    3  852    7    2
-##          D    0    0    1  797    2
-##          E    0    0    0    0  897
+##          A 1394    2    0    0    0
+##          B    1  947    4    0    0
+##          C    0    0  850    5    1
+##          D    0    0    1  797    1
+##          E    0    0    0    2  899
 ## 
 ## Overall Statistics
 ##                                          
@@ -243,14 +252,15 @@ confusionMatrix(predtest, test1$classe)</code></pre>
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            1.0000   0.9968   0.9965   0.9913   0.9956
-## Specificity            1.0000   0.9995   0.9970   0.9993   1.0000
-## Pos Pred Value         1.0000   0.9979   0.9861   0.9963   1.0000
-## Neg Pred Value         1.0000   0.9992   0.9993   0.9983   0.9990
+## Sensitivity            0.9993   0.9979   0.9942   0.9913   0.9978
+## Specificity            0.9994   0.9987   0.9985   0.9995   0.9995
+## Pos Pred Value         0.9986   0.9947   0.9930   0.9975   0.9978
+## Neg Pred Value         0.9997   0.9995   0.9988   0.9983   0.9995
 ## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
-## Detection Rate         0.2845   0.1929   0.1737   0.1625   0.1829
-## Detection Prevalence   0.2845   0.1933   0.1762   0.1631   0.1829
-## Balanced Accuracy      1.0000   0.9982   0.9968   0.9953   0.9978</code></pre>
+## Detection Rate         0.2843   0.1931   0.1733   0.1625   0.1833
+## Detection Prevalence   0.2847   0.1941   0.1746   0.1629   0.1837
+## Balanced Accuracy      0.9994   0.9983   0.9963   0.9954   0.9986</code></pre>
+<p><br> <br></p>
 </div>
 </div>
 <div id="prediction-algorithm" class="section level1">
@@ -259,7 +269,29 @@ confusionMatrix(predtest, test1$classe)</code></pre>
 <p>Newdata in the following code is labelled <strong>‘testing’</strong> and the result outcome data frame is called <strong>‘predictionTable’</strong></p>
 <pre class="r"><code>testing &lt;- select(testing, which(na_count$na == 0), -c(1:7))
 testing$classe &lt;- as.factor(testing$classe)
-predictionTable &lt;- data.frame(classe = predict(fitall, testing))</code></pre>
+predictionTable &lt;- data.frame(classe = predict(fitall, testing))
+print(predictionTable)</code></pre>
+<pre><code>##    classe
+## 1       B
+## 2       A
+## 3       B
+## 4       A
+## 5       A
+## 6       E
+## 7       D
+## 8       B
+## 9       A
+## 10      A
+## 11      B
+## 12      C
+## 13      B
+## 14      A
+## 15      E
+## 16      E
+## 17      A
+## 18      B
+## 19      B
+## 20      B</code></pre>
 <p><br> <br></p>
 </div>
 

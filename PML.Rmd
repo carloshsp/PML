@@ -21,18 +21,19 @@ Every code step will be shown and commented. R version 3.4.1 on a macOS 10.12.16
 # Strategy
 
 The strategy designed to cuild the machine learning algorithm above mentioned is the following:
+
 * Due to the nature of the data variability, most numeric and continuous, the model selected is the Random Forest.
 * First, features containing many NAs will be discarded
 * Training data will be sliced in two to allow model validation
 * A Random Forest model will be fit to training data
 * Model will be tested against tested data and accuracy obtained
+
 <br>
 <br>
 <br>
 
 # Data Processing
 
-<br>
 <br>
 
 ## Load required packages
@@ -105,6 +106,8 @@ partition <- createDataPartition(training$classe, p = 0.75, list=F)
 train1 <- training[partition,]
 test1 <- training[-partition,]         
 ```
+<br>
+<br>
 
 # Model Fitting - Random Forests
 
@@ -132,6 +135,8 @@ print(fitall)
 predtest <- predict(fitall, test1)
 confusionMatrix(predtest, test1$classe)
 ```
+<br>
+<br>
 
 # Prediction Algorithm
 
@@ -144,6 +149,7 @@ Newdata in the following code is labelled **'testing'** and the result outcome d
 testing <- select(testing, which(na_count$na == 0), -c(1:7))
 testing$classe <- as.factor(testing$classe)
 predictionTable <- data.frame(classe = predict(fitall, testing))
+print(predictionTable)
 ```
 <br>
 <br>
